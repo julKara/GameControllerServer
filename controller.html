@@ -1,20 +1,22 @@
 <!DOCTYPE html>
 <html>
-<body>
-<h1>Game Controller</h1>
-<button onclick="toggleLight()">Toggle Light</button>
+    <body>
+        <h1>Game Controller</h1>
+        <button onclick="toggleLight()">Toggle Light</button>
 
-<script>
-let socket = new WebSocket("ws://192.168.0.9:8080"); // Replace
+        <script>
+            let socket = new WebSocket("ws://192.168.0.9:8080"); // Replace with Dome IP and port
 
-socket.onopen = () => console.log("Connected to server");
-socket.onmessage = e => console.log("Message from Unreal:", e.data);
+            // Log connection status and messages from Unreal
+            socket.onopen = () => console.log("Connected to server");
+            socket.onmessage = e => console.log("Message from Unreal:", e.data);
 
-function toggleLight() {
-    socket.send("toggle_light");
-}
-</script>
-</body>
+            // Send a message to Unreal when the button is clicked that toggles a pointlinght in the scene
+            function toggleLight() {
+                socket.send("toggle_light");
+            }
+        </script>
+    </body>
 </html>
 
 <!--- 
