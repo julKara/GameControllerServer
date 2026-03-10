@@ -5,16 +5,32 @@
         <button onclick="toggleLight()">Toggle Light</button>
 
         <script>
-            let socket = new WebSocket("ws://192.168.0.9:8080"); // Replace with Dome IP and port
 
-            // Log connection status and messages from Unreal
-            socket.onopen = () => console.log("Connected to server");
-            socket.onmessage = e => console.log("Message from Unreal:", e.data);
+            let socket = new WebSocket("ws://192.168.0.9:8080");
 
-            // Send a message to Unreal when the button is clicked that toggles a pointlinght in the scene
+            socket.onopen = function () {
+                console.log("Connected to server");
+
+                // REGISTER THIS CLIENT AS A PHONE
+                socket.send("register:phone");
+            };
+
+            socket.onmessage = function (e) {
+                console.log("Message from server:", e.data);
+            };
+
+            socket.onerror = function (err) {
+                console.log("Socket error:", err);
+            };
+
+            socket.onclose = function () {
+                console.log("Disconnected");
+            };
+
             function toggleLight() {
                 socket.send("toggle_light");
             }
+
         </script>
     </body>
 </html>
@@ -22,4 +38,4 @@
 <!--- 
 o Write "python -m http.server 8000" to start
 o Write ctrl + c to turn off server
-o Write http:192.168.0.9:8000/controller.html on phone to find --->
+o Write http://192.168.0.9:8000/controller.html on phone to find --->
