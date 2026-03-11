@@ -1,0 +1,80 @@
+# This is a simple web controller for the Omniverse WebSocket server. It allows you to connect using a session code and send movement commands.
+# To use, enter into cmd:
+# cd C:\OmniTest
+# http-server
+
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<title>Phone Controller</title>
+</head>
+
+    <body>
+
+    <h1>Phone Controller</h1>
+
+    <input id="codeInput" placeholder="Enter session code">
+    <button onclick="connect()">Connect</button>
+
+    <br><br>
+
+    <button onclick="sendMovement()">Send Movement</button>
+
+    <script>
+
+        let socket = null;
+
+        function connect() {
+
+            const code = document.getElementById("codeInput").value;
+
+            socket = new WebSocket("wss://omni.itn.liu.se/ws/");
+
+            socket.onopen = () => {
+
+                console.log("Connected to Omni");
+
+                socket.send(JSON.stringify({
+                    token: code,
+                    name: "PhoneUser"
+                }));
+
+            };
+
+            socket.onmessage = (event) => {
+
+                const data = JSON.parse(event.data);
+                console.log("Server:", data);
+
+                if (data.type === "server_authorized") {
+                    alert("Connected!");
+                }
+
+                if (data.type === "server_disconnect") {
+                    alert("Disconnected: " + data.message);
+                }
+
+            };
+
+            socket.onclose = () => {
+                console.log("Connection closed");
+            };
+
+        }
+
+        function sendMovement() {
+
+            if (!socket) return;
+
+            socket.send(JSON.stringify({
+                type: "movement",
+                x: Math.random(),
+                y: Math.random()
+            }));
+
+        }
+    </script>
+
+    </body>
+</html>
