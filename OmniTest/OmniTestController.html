@@ -1,7 +1,8 @@
-# This is a simple web controller for the Omniverse WebSocket server. It allows you to connect using a session code and send movement commands.
-# To use, enter into cmd:
-# cd C:\OmniTest
-# http-server
+<!--- This is a simple web controller for the Omniverse WebSocket server. It allows you to connect using a session code and send movement commands.
+% To use, enter into cmd:
+%% cd OmniTest
+%% http-server 
+--->
 
 <!DOCTYPE html>
 <html>
@@ -21,48 +22,102 @@
 
     <button onclick="sendMovement()">Send Movement</button>
 
+    <div id="blankUI">
+        Waiting for game...
+    </div>
+
+    <div id="joystickUI" style="display:none;">
+        Joystick here
+    </div>
+    
     <script>
 
         let socket = null;
 
+        // Get stored player ID
+        let playerName = localStorage.getItem("playerName");
+
+        // If no player ID, create a new one and store it
+        if (!playerName) {
+            playerName = "player_" + Math.floor(Math.random()*100000);
+            localStorage.setItem("playerName", playerName); // Store player name in local storage, for reconnection purposes
+        }
+
+        // Connect to WebSocket server
         function connect() {
 
+            // Get session code from input
             const code = document.getElementById("codeInput").value;
-
+           
+            // Create WebSocket connection to Omni server
             socket = new WebSocket("wss://omni.itn.liu.se/ws/");
 
             socket.onopen = () => {
 
                 console.log("Connected to Omni");
 
+                // Send authorization message with session code and player name
                 socket.send(JSON.stringify({
                     token: code,
-                    name: "PhoneUser"
+                    name: playerName
                 }));
 
             };
 
+            // Listen for messages from the server
             socket.onmessage = (event) => {
 
+                // Parse incoming messages as JSON
                 const data = JSON.parse(event.data);
-                console.log("Server:", data);
+                console.log("Received:", data);
 
+                // Alert user on successful connection
                 if (data.type === "server_authorized") {
-                    alert("Connected!");
+                    alert("Connected to server!");
                 }
 
+                // Alert user on disconnection
                 if (data.type === "server_disconnect") {
                     alert("Disconnected: " + data.message);
                 }
 
+                // If server sends input type, show corresponding UI
+                if (data.type === "set_input") {
+
+                    // Show blank "waiting-screen", used when not allowed to connect
+                    if (data.input === "blank") {
+                        showBlank();
+                    }
+
+                    // Show joystick UI
+                    if (data.input === "joystick") {
+                        showJoystick();
+                    }
+                }
             };
 
+            // Handle when socket connection is closed
             socket.onclose = () => {
                 console.log("Connection closed");
             };
 
         }
 
+        function showBlank() {
+
+            document.getElementById("blankUI").style.display = "block";
+            document.getElementById("joystickUI").style.display = "none";
+
+        }
+
+        function showJoystick() {
+
+            document.getElementById("blankUI").style.display = "none";
+            document.getElementById("joystickUI").style.display = "block";
+
+        }
+        
+        // Send movement command to server
         function sendMovement() {
 
             if (!socket) return;
