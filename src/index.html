@@ -12,84 +12,98 @@
 <html>
 <body>
 
-<div id="app"></div>
+    <div id="app"></div>
 
-<script>
+    <script>
 
-let socket = null;          // WebSocket connection
-let currentUI = null;       // Currently active UI module
+        let socket = null;          // WebSocket connection
 
-// Persistent player name
-let playerName = localStorage.getItem("playerName");
+        // Persistent player aspects stored in local storage
+        let playerName = localStorage.getItem("playerName");                    // Name
+        let currentUI = localStorage.getItem("currentUI") || "waitToPlay";      // Current UI type (default to "waiting" if not set)
 
-// Set and store random player name if not already set in local storage
-if (!playerName) {
-    playerName = "player_" + Math.floor(Math.random() * 100000);
-    localStorage.setItem("playerName", playerName);
-}
-
-// Connect to Omni
-function connect(code) {
-
-    // Create WebSocket connection to Omni server
-    socket = new WebSocket("wss://omni.itn.liu.se/ws/");
-
-    // On connection open, send authorization message with session code and player name
-    socket.onopen = () => {
-        
-        console.log("Connected to Omni");   // Debug log
-
-        socket.send(JSON.stringify({
-            token: code,
-            name: playerName
-        }));
-    };
-
-    // Handle incoming messages from Unreal/Omni server
-    socket.onmessage = (event) => {
-
-        // Parse incoming messages as JSON
-        const data = JSON.parse(event.data);
-        console.log("Received:", data);  // Debug log
-
-        // Change UI based on "set_input" message from server
-        if (data.type === "set_input") {
-            loadUI(data.input);
+        // Set and store random player name if not already set in local storage
+        if (!playerName) {
+            playerName = "player_" + Math.floor(Math.random() * 100000);
+            localStorage.setItem("playerName", playerName);
         }
 
-        // Forward message to active UI
-        if (currentUI && currentUI.onMessage) {
-            currentUI.onMessage(data);
+        // Connect to Omni
+        function connect(code) {
+
+            // Create WebSocket connection to Omni server
+            socket = new WebSocket("wss://omni.itn.liu.se/ws/");
+
+            // On connection open, send authorization message with session code and player name
+            socket.onopen = () => {
+                
+                console.log("Connected to Omni");   // Debug log
+
+                socket.send(JSON.stringify({
+                    token: code,
+                    name: playerName
+                }));
+
+                // Upon reconnection, re-send current UI type to restore last UI
+                let savedUI = localStorage.getItem("currentUI");
+                if (savedUI) {
+                    loadUI(savedUI);
+                }
+            };
+
+            // Handle incoming messages from Unreal/Omni server
+            socket.onmessage = (event) => {
+
+                // Parse incoming messages as JSON
+                const data = JSON.parse(event.data);
+                console.log("Received:", data);  // Debug log
+
+                // Change UI based on "set_input" message from server
+                if (data.type === "set_input") {
+                    
+                    localStorage.setItem("currentUI", data.input);   // Store current UI type in local storage for persistence
+                    
+                    loadUI(data.input);
+                }
+
+                // Forward message to active UI
+                if (currentUI && currentUI.onMessage) {
+                    currentUI.onMessage(data);
+                }
+            };
         }
-    };
-}
 
-// Load UI module dynamically
-function loadUI(type) {
+        // Load UI module dynamically
+        function loadUI(type) {
 
-    console.log("Loading UI:", type);   // Debug log
+            console.log("Loading UI:", type);   // Debug log
 
-    // Cleanup previous UI
-    if (currentUI && currentUI.destroy) {
-        currentUI.destroy();
-    }
+            // Cleanup previous UI
+            if (currentUI && currentUI.destroy) {
+                currentUI.destroy();
+            }
 
-    // Dynamically load JS file from ui-folder
-    import(`./ui/${type}.js`).then(module => {
+            // Dynamically load JS file from ui-folder
+            import(`./ui/${type}.js`).then(module => {
 
-        // Set currentUI to the newly loaded module, and call its createUI function to render
-        currentUI = module.createUI(document.getElementById("app"), socket);
+                // Set currentUI to the newly loaded module, and call its createUI function to render
+                currentUI = module.createUI(document.getElementById("app"), socket);
 
-    }).catch(err => {   // Handle errors in loading UI module
-        console.error("UI load failed:", err);
-    });
-}
+            }).catch(err => {   // Handle errors in loading UI module
+                console.error("UI load failed:", err);
+            });
+        }
 
-// Connect immediately (or use input field)
-const code = prompt("Enter session code:");
-connect(code);
+        // Try enter session code to connect, or prompt user if not found in local storage
+        let code = localStorage.getItem("sessionCode");
 
-</script>
+        if (!code) {
+            code = prompt("Enter session code:");
+            localStorage.setItem("sessionCode", code);
+        }
+        connect(code);
+
+    </script>
 
 </body>
 </html>
