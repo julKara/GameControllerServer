@@ -1,28 +1,49 @@
 export function createUI(container, socket) {
 
     container.innerHTML = `
-        <h1>Joystick</h1>
-        <button id="moveBtn">Move</button>
+        <div style="width:500px;height:500px;background:#ccc;border-radius:50%;position:relative;">
+            <div id="stick" style="width:200px;height:200px;background:#333;border-radius:50%;position:absolute;left:75px;top:75px;"></div>
+        </div>
     `;
 
-    const btn = document.getElementById("moveBtn");
+    const stick = document.getElementById("stick");
 
-    // When button is clicked, send random movement data to server
-    btn.onclick = () => {
+    let dragging = false;
+
+    stick.addEventListener("touchstart", () => dragging = true);
+    stick.addEventListener("touchend", () => {
+        dragging = false;
 
         socket.send(JSON.stringify({
             type: "movement",
-            x: Math.random(),
-            y: Math.random()
+            x: 0,
+            y: 0
         }));
+    });
 
-        console.log("Sent movement");
-    };
+    stick.addEventListener("touchmove", (e) => {
+
+        if (!dragging) return;
+
+        const rect = stick.parentElement.getBoundingClientRect();
+
+        let x = e.touches[0].clientX - rect.left - 100;
+        let y = e.touches[0].clientY - rect.top - 100;
+
+        x = Math.max(-75, Math.min(75, x));
+        y = Math.max(-75, Math.min(75, y));
+
+        stick.style.left = (x + 100 - 25) + "px";
+        stick.style.top = (y + 100 - 25) + "px";
+
+        socket.send(JSON.stringify({
+            type: "movement",
+            x: x / 75,
+            y: -y / 75
+        }));
+    });
 
     return {
-        onMessage(data) {
-            // Handle incoming data if needed
-        },
         destroy() {
             container.innerHTML = "";
         }
