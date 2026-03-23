@@ -33,7 +33,8 @@
 
         // Persistent player aspects stored in local storage
         let playerName = localStorage.getItem("playerName");                    // Name
-        let currentUI = localStorage.getItem("currentUI") || "waitToPlay";      // Current UI type (default to "waiting" if not set)
+        let currentUIType = localStorage.getItem("currentUI") || "waitToPlay";  // Current UI type (default to "waitToPlay" if not set)
+        let currentUI = null;
 
         // Set and store random player name if not already set in local storage
         if (!playerName) {
@@ -57,6 +58,13 @@
                     name: playerName
                 }));
 
+                /*/ Upon reconnection, re-send current UI type to restore last UI
+                let savedUI = localStorage.setItem("currentUI", data.input);
+                if (savedUI) {
+                    currentUIType = data.input;
+                    loadUI(data.input);
+                }*/
+
                 // Upon reconnection, re-send current UI type to restore last UI
                 let savedUI = localStorage.getItem("currentUI");
                 if (savedUI) {
@@ -74,8 +82,8 @@
                 // Change UI based on "set_input" message from server
                 if (data.type === "set_input") {
                     
-                    localStorage.setItem("currentUI", data.input);   // Store current UI type in local storage for persistence
-                    
+                    localStorage.setItem("currentUI", data.input);
+                    currentUIType = data.input;
                     loadUI(data.input);
                 }
 
