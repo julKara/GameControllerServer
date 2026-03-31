@@ -54,7 +54,7 @@ export function createUI(container, socket) {
             canvas.addEventListener("touchstart", e => {
                 //console.log(e.touches[0]);
                 e.preventDefault();
-                this.touchPos = new Vector2(e.touches[0].pageX, e.touches[0].pageY);    // Set touch position to the first touch point
+                this.touchPos = new Vector2(e.touches[0].clientX, e.touches[0].clientY);    // Set touch position to the first touch point
                 this.ondrag = true; // Start dragging
             }, { passive: false });
 
@@ -67,7 +67,7 @@ export function createUI(container, socket) {
             // When moving touch
             canvas.addEventListener("touchmove", e => {
                 e.preventDefault();
-                this.touchPos = new Vector2(e.touches[0].pageX, e.touches[0].pageY);    // Update touch position
+                this.touchPos = new Vector2(e.touches[0].clientX, e.touches[0].clientY);    // Update touch position
             }, { passive: false });
         }
         
