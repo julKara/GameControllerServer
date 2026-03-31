@@ -51,21 +51,24 @@ export function createUI(container, socket) {
         listener(){
 
             // When start-touch
-            addEventListener("touchstart", e => {
+            canvas.addEventListener("touchstart", e => {
                 //console.log(e.touches[0]);
+                e.preventDefault();
                 this.touchPos = new Vector2(e.touches[0].pageX, e.touches[0].pageY);    // Set touch position to the first touch point
                 this.ondrag = true; // Start dragging
-            });
+            }, { passive: false });
 
             // When ending touch
-            addEventListener("touchend", () => {
-                this.ondrag = false;    // Stop dragging
-            });
+            canvas.addEventListener("touchend", e => {
+                e.preventDefault();
+                this.ondrag = false;
+            }, { passive: false });
 
             // When moving touch
-            addEventListener("touchmove", e => {
+            canvas.addEventListener("touchmove", e => {
+                e.preventDefault();
                 this.touchPos = new Vector2(e.touches[0].pageX, e.touches[0].pageY);    // Update touch position
-            });
+            }, { passive: false });
         }
         
         // Calculate the angle and strength of the joystick based on its current position relative to the origin
@@ -138,11 +141,6 @@ export function createUI(container, socket) {
     addEventListener("resize", resizeCanvas);
     joystick.listener(); // Start listening for touch events
 
-
-    const FPS = 120; // Frames per second for rendering
-    const SEND_RATE = 30;
-    let frame = 0;
-
     // Background design
     function background(){
         context.fillStyle = '#583a86';              // Light gray background
@@ -150,26 +148,68 @@ export function createUI(container, socket) {
 
     }
 
-    // Draw the things at the specified FPS
-    let loop = setInterval(() => {
-        background(); // Draw the background
+    const SEND_INTERVAL = 50; // 20 Hz
+    let lastSend = 0;
 
-        joystick.update(); // Draw the joystick
+    let lastAngle = 0;
+    let lastStrength = 0;
 
-        // Send joystick input to the server at the specified SEND_RATE
-        if (frame++ % (FPS / SEND_RATE) === 0 && socket.readyState === WebSocket.OPEN) {
-            const input = joystick.getInput();
+    const ANGLE_EPSILON = 0.02;
+    const STRENGTH_EPSILON = 0.02;
 
-            socket.send(JSON.stringify({
-                type: "movement",   
-                angle: input.angle,
-                strength: input.strength,
-                x: Math.cos(input.angle) * input.strength,
-                y: Math.sin(input.angle) * input.strength
-            }));
+    function sendInput() {
+        if (socket.readyState !== WebSocket.OPEN) return;
+
+        const now = performance.now();
+        if (now - lastSend < SEND_INTERVAL) return;
+
+        const input = joystick.getInput();
+
+        // DEADZONE HARD STOP
+        if (input.strength < 0.05) {
+            // Only send ONE stop message
+            if (lastStrength !== 0) {
+                socket.send(JSON.stringify({
+                    type: "movement",
+                    user: window.USER_ID,
+                    angle: 0,
+                    strength: 0
+                }));
+                lastStrength = 0;
+            }
+            return;
         }
-        
-    }, 1000/FPS);
+
+        // Only send if changed
+        if (
+            Math.abs(input.angle - lastAngle) < ANGLE_EPSILON &&
+            Math.abs(input.strength - lastStrength) < STRENGTH_EPSILON
+        ) {
+            return;
+        }
+
+        lastSend = now;
+        lastAngle = input.angle;
+        lastStrength = input.strength;
+
+        socket.send(JSON.stringify({
+            type: "movement",
+            user: window.USER_ID,
+            angle: input.angle,
+            strength: input.strength
+        }));
+    }
+
+    // Main loop to update the joystick and send input
+    function loop() {
+        background();       // Clear the canvas with the background color
+        joystick.update();  // Update and draw the joystick
+        sendInput();        // Send the joystick input to the server
+
+        requestAnimationFrame(loop);    // Schedule the next frame
+    }
+
+    loop();
     
     return {
         destroy() {
