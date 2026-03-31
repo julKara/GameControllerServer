@@ -165,20 +165,21 @@ export function createUI(container, socket) {
 
         const input = joystick.getInput();
 
-        // DEADZONE HARD STOP
+        // HARD STOP
         if (input.strength < 0.05) {
-            // Only send ONE stop message
-            if (lastStrength !== 0) {
+            if (!isStopped) {
                 socket.send(JSON.stringify({
                     type: "movement",
                     user: window.USER_ID,
                     angle: 0,
                     strength: 0
                 }));
-                lastStrength = 0;
+                isStopped = true;
             }
             return;
         }
+
+        isStopped = false;
 
         // Only send if changed
         if (
