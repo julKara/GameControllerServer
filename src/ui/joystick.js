@@ -157,6 +157,8 @@ export function createUI(container, socket) {
     const ANGLE_EPSILON = 0.02;
     const STRENGTH_EPSILON = 0.02;
 
+    let isStopped = true;
+
     function sendInput() {
         if (socket.readyState !== WebSocket.OPEN) return;
 
