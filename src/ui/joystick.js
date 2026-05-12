@@ -224,16 +224,6 @@ export function createUI(container, socket) {
         scoreText.innerText = `Score: ${currentScore}`;
     }
 
-    // Reset score function
-    function resetScore() {
-
-        currentScore = 0;
-
-        updateScoreDisplay();
-
-        console.log("Score reset");
-    }
-
     // CONTROLLER/INPUTS -------------------------------------------------------------------------
     const SEND_INTERVAL = 50; // 20 Hz
     let lastSend = 0;
@@ -320,16 +310,11 @@ export function createUI(container, socket) {
             // Update score on server message
             if (data.type === "score_update") {
 
-                currentScore = parseInt(data.score);
+                currentScore = parseInt(data.input);
 
                 updateScoreDisplay();
 
                 console.log("Updated score:", currentScore);
-            }
-            // Reset score on server message
-            if (data.type === "score_reset") {
-
-                resetScore();
             }
         },
 
