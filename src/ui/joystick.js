@@ -125,11 +125,36 @@ export function createUI(container, socket) {
     // Main -------------------------------------------------------------------------
 
     container.innerHTML = `
-        <div id="joystick"></div>
+        <div id="joystick-wrapper"
+            style="
+                position: relative;
+                width: 100vw;
+                height: 100vh;
+                overflow: hidden;
+            "
+        >
+            <div id="scoreText"
+                style="
+                    position: absolute;
+                    bottom: 40px;
+                    left: 50%;
+                    transform: translateX(-50%);
+                    color: white;
+                    font-size: 42px;
+                    font-family: Arial, sans-serif;
+                    font-weight: bold;
+                    text-shadow: 0 0 10px rgba(0,0,0,0.5);
+                    z-index: 10;
+                    user-select: none;
+                "
+            >
+                Score: 0
+            </div>
+        </div>
     `;
 
     const canvas = document.createElement("canvas"), context = canvas.getContext("2d");
-    container.appendChild(canvas);
+    document.getElementById("joystick-wrapper").appendChild(canvas);
 
     let width, height;
 
@@ -189,6 +214,27 @@ export function createUI(container, socket) {
         context.fillRect(0, 0, width, height);
     }
 
+    // Score display
+    function updateScoreDisplay() {
+
+        const scoreText = document.getElementById("scoreText");
+
+        if (!scoreText) return;
+
+        scoreText.innerText = `Score: ${currentScore}`;
+    }
+
+    // Reset score function
+    function resetScore() {
+
+        currentScore = 0;
+
+        updateScoreDisplay();
+
+        console.log("Score reset");
+    }
+
+    // CONTROLLER/INPUTS -------------------------------------------------------------------------
     const SEND_INTERVAL = 50; // 20 Hz
     let lastSend = 0;
 
@@ -199,6 +245,7 @@ export function createUI(container, socket) {
     const STRENGTH_EPSILON = 0.02;
 
     let isStopped = true;
+    let currentScore = 0;   // Track the current score to update the score display
 
     function sendInput() {
         if (socket.readyState !== WebSocket.OPEN) return;
@@ -259,6 +306,7 @@ export function createUI(container, socket) {
 
         onMessage(data) {
 
+            // Set background hue based on server message
             if (data.type === "set_hue") {
 
                 backgroundHue = parseInt(data.hue);
@@ -268,6 +316,20 @@ export function createUI(container, socket) {
                 if (backgroundHue > 360) backgroundHue = 360;
 
                 console.log("Updated background hue:", backgroundHue);
+            }
+            // Update score on server message
+            if (data.type === "score_update") {
+
+                currentScore = parseInt(data.score);
+
+                updateScoreDisplay();
+
+                console.log("Updated score:", currentScore);
+            }
+            // Reset score on server message
+            if (data.type === "score_reset") {
+
+                resetScore();
             }
         },
 
