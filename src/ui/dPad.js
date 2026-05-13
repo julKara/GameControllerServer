@@ -56,24 +56,35 @@ export function createUI(container, socket) {
             const bindButton = (id, key) => {
                 const el = document.getElementById(id);
 
-                // Prevent browser gestures (VERY important on phones)
                 el.style.touchAction = "none";
 
                 // PRESS
                 el.addEventListener("pointerdown", (e) => {
                     e.preventDefault();
 
+                    // Capture pointer (fixes multi-tap issue)
+                    el.setPointerCapture(e.pointerId);
+
                     this.inputs[key] = true;
 
-                    // HAPTIC FEEDBACK
+                    // VISUAL feedback (instant highlight)
+                    el.style.background = "rgba(255,255,255,0.4)";
+
+                    // HAPTIC FEEDBACK (with fallback)
                     if (navigator.vibrate) {
-                        navigator.vibrate(10);
+                        navigator.vibrate(20);
                     }
                 });
 
                 // RELEASE
-                const release = () => {
+                const release = (e) => {
                     this.inputs[key] = false;
+
+                    el.style.background = "rgba(255,255,255,0.1)";
+
+                    try {
+                        el.releasePointerCapture(e.pointerId);
+                    } catch {}
                 };
 
                 el.addEventListener("pointerup", release);
@@ -110,6 +121,9 @@ export function createUI(container, socket) {
             y /= length;
 
             const angle = Math.atan2(y, x);
+
+            // DEBUGG
+            console.log(this.inputs);
 
             return { angle, strength: 1 };
         }
@@ -152,10 +166,41 @@ export function createUI(container, socket) {
         >
 
             <!-- D-PAD BUTTONS -->
-            <div id="btn-up" style="position:absolute; left:50%; top:30%; width:80px; height:80px; transform:translate(-50%,-50%);"></div>
-            <div id="btn-down" style="position:absolute; left:50%; top:70%; width:80px; height:80px; transform:translate(-50%,-50%);"></div>
-            <div id="btn-left" style="position:absolute; left:30%; top:50%; width:80px; height:80px; transform:translate(-50%,-50%);"></div>
-            <div id="btn-right" style="position:absolute; left:70%; top:50%; width:80px; height:80px; transform:translate(-50%,-50%);"></div>
+            <div id="btn-up" style="
+                position:absolute; left:50%; top:30%;
+                width:80px; height:80px;
+                transform:translate(-50%,-50%);
+                z-index:10;
+                background:rgba(255,255,255,0.1);
+                border-radius:12px;
+            "></div>
+
+            <div id="btn-down" style="
+                position:absolute; left:50%; top:70%;
+                width:80px; height:80px;
+                transform:translate(-50%,-50%);
+                z-index:10;
+                background:rgba(255,255,255,0.1);
+                border-radius:12px;
+            "></div>
+            
+            <div id="btn-left" style="
+                position:absolute; left:30%; top:50%;
+                width:80px; height:80px;
+                transform:translate(-50%,-50%);
+                z-index:10;
+                background:rgba(255,255,255,0.1);
+                border-radius:12px;
+            "></div>
+
+            <div id="btn-right" style="
+                position:absolute; left:70%; top:50%;
+                width:80px; height:80px;
+                transform:translate(-50%,-50%);
+                z-index:10;
+                background:rgba(255,255,255,0.1);
+                border-radius:12px;
+            "></div>
 
             <!-- SCORE -->
             <div id="scoreText"
@@ -179,6 +224,12 @@ export function createUI(container, socket) {
         `;
 
     const canvas = document.createElement("canvas"), context = canvas.getContext("2d");
+    canvas.style.position = "absolute";
+    canvas.style.top = "0";
+    canvas.style.left = "0";
+    canvas.style.zIndex = "0";   // behind buttons
+    canvas.style.pointerEvents = "none"; // allows touches to pass through
+
     document.getElementById("dPad-wrapper").appendChild(canvas);
 
     let width, height;
@@ -286,7 +337,7 @@ export function createUI(container, socket) {
         }
 
         isStopped = false;
-        
+
         // Always send while holding (DO NOT compare with lastAngle anymore)
         lastSend = now;
 
