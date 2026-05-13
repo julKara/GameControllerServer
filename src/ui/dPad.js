@@ -263,7 +263,7 @@ export function createUI(container, socket) {
     let currentScore = 0;   // Track the current score to update the score display
 
     function sendInput() {
-        
+
         if (socket.readyState !== WebSocket.OPEN) return;
 
         const now = performance.now();
@@ -286,10 +286,8 @@ export function createUI(container, socket) {
         }
 
         isStopped = false;
-
-        // 🔥 IMPORTANT CHANGE:
+        
         // Always send while holding (DO NOT compare with lastAngle anymore)
-
         lastSend = now;
 
         socket.send(JSON.stringify({
