@@ -39,7 +39,7 @@ export function createUI(container, socket) {
         constructor(socket) {
             this.socket = socket;
 
-            // Track which buttons are currently pressed
+            // Track active inputs
             this.inputs = {
                 up: false,
                 down: false,
@@ -49,30 +49,36 @@ export function createUI(container, socket) {
         }
 
         // -------------------------------------------------------------------------
-        // INPUT LISTENERS (touch buttons instead of dragging)
+        // INPUT LISTENERS (FIXED: uses pointer events = MUCH more reliable)
         // -------------------------------------------------------------------------
         listener() {
 
-            // Helper to bind both touchstart + touchend
             const bindButton = (id, key) => {
                 const el = document.getElementById(id);
 
-                // Press
-                el.addEventListener("touchstart", (e) => {
+                // Prevent browser gestures (VERY important on phones)
+                el.style.touchAction = "none";
+
+                // PRESS
+                el.addEventListener("pointerdown", (e) => {
                     e.preventDefault();
+
                     this.inputs[key] = true;
-                }, { passive: false });
 
-                // Release
-                el.addEventListener("touchend", (e) => {
-                    e.preventDefault();
-                    this.inputs[key] = false;
-                }, { passive: false });
-
-                // Safety: if finger slides off
-                el.addEventListener("touchcancel", () => {
-                    this.inputs[key] = false;
+                    // HAPTIC FEEDBACK
+                    if (navigator.vibrate) {
+                        navigator.vibrate(10);
+                    }
                 });
+
+                // RELEASE
+                const release = () => {
+                    this.inputs[key] = false;
+                };
+
+                el.addEventListener("pointerup", release);
+                el.addEventListener("pointercancel", release);
+                el.addEventListener("pointerleave", release);
             };
 
             bindButton("btn-up", "up");
@@ -82,56 +88,50 @@ export function createUI(container, socket) {
         }
 
         // -------------------------------------------------------------------------
-        // CORE: Convert button states → angle + strength
+        // CORE INPUT LOGIC
         // -------------------------------------------------------------------------
         getInput() {
 
             let x = 0;
             let y = 0;
 
-            // Build direction vector from button states
             if (this.inputs.left)  x -= 1;
             if (this.inputs.right) x += 1;
-            if (this.inputs.up)    y -= 1; // up = negative Y
+            if (this.inputs.up)    y -= 1;
             if (this.inputs.down)  y += 1;
 
-            // No input → stop
             if (x === 0 && y === 0) {
                 return { angle: 0, strength: 0 };
             }
 
-            // Normalize diagonal movement so speed is consistent
+            // Normalize (so diagonals aren't faster)
             const length = Math.sqrt(x * x + y * y);
             x /= length;
             y /= length;
 
-            // Angle logic
             const angle = Math.atan2(y, x);
 
-            // D-pad = constant strength
             return { angle, strength: 1 };
         }
 
         // -------------------------------------------------------------------------
-        // VISUAL (optional but nice)
+        // VISUAL
         // -------------------------------------------------------------------------
         draw() {
 
             const size = 80;
-            const centerX = width / 2;
-            const centerY = height / 2;
+            const cx = width / 2;
+            const cy = height / 2;
 
-            // Helper to draw a button
             const drawBtn = (x, y, active) => {
                 context.fillStyle = active ? "#aaaaaa" : "#555555";
                 context.fillRect(x - size/2, y - size/2, size, size);
             };
 
-            // Draw 4 buttons
-            drawBtn(centerX, centerY - size, this.inputs.up);
-            drawBtn(centerX, centerY + size, this.inputs.down);
-            drawBtn(centerX - size, centerY, this.inputs.left);
-            drawBtn(centerX + size, centerY, this.inputs.right);
+            drawBtn(cx, cy - size, this.inputs.up);
+            drawBtn(cx, cy + size, this.inputs.down);
+            drawBtn(cx - size, cy, this.inputs.left);
+            drawBtn(cx + size, cy, this.inputs.right);
         }
 
         update() {
@@ -263,6 +263,7 @@ export function createUI(container, socket) {
     let currentScore = 0;   // Track the current score to update the score display
 
     function sendInput() {
+        
         if (socket.readyState !== WebSocket.OPEN) return;
 
         const now = performance.now();
@@ -270,8 +271,8 @@ export function createUI(container, socket) {
 
         const input = dpad.getInput();
 
-        // HARD STOP
-        if (input.strength < 0.05) {
+        // STOP
+        if (input.strength === 0) {
             if (!isStopped) {
                 socket.send(JSON.stringify({
                     type: "movement",
@@ -286,17 +287,10 @@ export function createUI(container, socket) {
 
         isStopped = false;
 
-        // Only send if changed
-        if (
-            Math.abs(input.angle - lastAngle) < ANGLE_EPSILON &&
-            Math.abs(input.strength - lastStrength) < STRENGTH_EPSILON
-        ) {
-            return;
-        }
+        // 🔥 IMPORTANT CHANGE:
+        // Always send while holding (DO NOT compare with lastAngle anymore)
 
         lastSend = now;
-        lastAngle = input.angle;
-        lastStrength = input.strength;
 
         socket.send(JSON.stringify({
             type: "movement",
