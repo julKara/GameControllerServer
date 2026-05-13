@@ -68,7 +68,8 @@ export function createUI(container, socket) {
                     this.inputs[key] = true;
 
                     // VISUAL feedback (instant highlight)
-                    el.style.background = "rgba(255,255,255,0.6)";
+                    el.style.filter = "brightness(1.8)";
+                    el.style.transform = "scale(0.9)";
                     el.style.transform = "scale(0.9)";
 
                     // HAPTIC FEEDBACK (with fallback) (only on android)
@@ -84,7 +85,7 @@ export function createUI(container, socket) {
                 const release = (e) => {
                     this.inputs[key] = false;
 
-                    el.style.background = "rgba(255,255,255,0.25)";
+                    el.style.filter = "brightness(1)";
                     el.style.transform = "scale(1)";
 
                     try {
@@ -177,8 +178,8 @@ export function createUI(container, socket) {
                     left:50%;
                     top:50%;
                     transform:translate(-50%,-50%);
-                    width:320px;
-                    height:320px;
+                    width: min(60vw, 360px);
+                    height: min(60vw, 360px);
 
                     display:grid;
                     grid-template-columns: repeat(3, 1fr);
@@ -220,12 +221,35 @@ export function createUI(container, socket) {
         </div>
         `;
 
+    // -------------------------------------------------------------------------
+    // SAFARI ZOOM FIX (must be inside same file as requested)
+    // -------------------------------------------------------------------------
+
+    let lastTouchEnd = 0;
+
+    // Prevent double-tap zoom
+    document.addEventListener("touchend", function (event) {
+        const now = Date.now();
+
+        if (now - lastTouchEnd <= 300) {
+            event.preventDefault(); // BLOCK zoom
+        }
+
+        lastTouchEnd = now;
+    }, { passive: false });
+
+
+    // Prevent pinch zoom (Safari gesture)
+    document.addEventListener("gesturestart", function (e) {
+        e.preventDefault();
+    }, { passive: false });
+
     document.querySelectorAll(".dpad-btn").forEach(btn => {
-        btn.style.background = "rgba(255,255,255,0.25)";
-        btn.style.borderRadius = "18px";
+        btn.style.borderRadius = "20px";
         btn.style.width = "100%";
         btn.style.height = "100%";
         btn.style.touchAction = "none";
+        btn.style.transition = "all 0.1s ease";
     });
     
         // Grid layout for d-pad buttons
@@ -241,11 +265,17 @@ export function createUI(container, socket) {
     dpadEl.style.gridTemplateRows = "1fr 1fr 1fr";
 
     document.querySelectorAll(".dpad-btn").forEach(btn => {
-        btn.style.background = "rgba(255,255,255,0.15)";
         btn.style.borderRadius = "20px";
-        btn.style.margin = "10px";
+        btn.style.width = "100%";
+        btn.style.height = "100%";
         btn.style.touchAction = "none";
+        btn.style.transition = "all 0.1s ease";
     });
+
+    document.getElementById("btn-up").style.background = "rgba(0, 200, 255, 0.35)";
+    document.getElementById("btn-down").style.background = "rgba(255, 80, 80, 0.35)";
+    document.getElementById("btn-left").style.background = "rgba(255, 200, 0, 0.35)";
+    document.getElementById("btn-right").style.background = "rgba(100, 255, 100, 0.35)";
 
     //const canvas = document.createElement("canvas"), context = canvas.getContext("2d");
     // canvas.style.position = "absolute";
