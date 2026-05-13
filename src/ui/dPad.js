@@ -264,14 +264,6 @@ export function createUI(container, socket) {
     dpadEl.style.gridTemplateColumns = "1fr 1fr 1fr";
     dpadEl.style.gridTemplateRows = "1fr 1fr 1fr";
 
-    document.querySelectorAll(".dpad-btn").forEach(btn => {
-        btn.style.borderRadius = "20px";
-        btn.style.width = "100%";
-        btn.style.height = "100%";
-        btn.style.touchAction = "none";
-        btn.style.transition = "all 0.1s ease";
-    });
-
     document.getElementById("btn-up").style.background = "rgba(0, 200, 255, 0.35)";
     document.getElementById("btn-down").style.background = "rgba(255, 80, 80, 0.35)";
     document.getElementById("btn-left").style.background = "rgba(255, 200, 0, 0.35)";
@@ -340,8 +332,10 @@ export function createUI(container, socket) {
 
         const color = hsvToRgb(backgroundHue, backgroundSaturation, backgroundValue);
 
-        context.fillStyle = color;
-        context.fillRect(0, 0, width, height);
+        const wrapper = document.getElementById("dPad-wrapper");
+        if (wrapper) {
+            wrapper.style.background = color;
+        }
     }
 
     // Score display
