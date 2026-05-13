@@ -68,7 +68,8 @@ export function createUI(container, socket) {
                     this.inputs[key] = true;
 
                     // VISUAL feedback (instant highlight)
-                    el.style.background = "rgba(255,255,255,0.4)";
+                    el.style.background = "rgba(255,255,255,0.6)";
+                    el.style.transform = "scale(0.9)";
 
                     // HAPTIC FEEDBACK (with fallback) (only on android)
                     if (navigator.vibrate) {
@@ -83,7 +84,8 @@ export function createUI(container, socket) {
                 const release = (e) => {
                     this.inputs[key] = false;
 
-                    el.style.background = "rgba(255,255,255,0.1)";
+                    el.style.background = "rgba(255,255,255,0.25)";
+                    el.style.transform = "scale(1)";
 
                     try {
                         el.releasePointerCapture(e.pointerId);
@@ -161,31 +163,43 @@ export function createUI(container, socket) {
     container.innerHTML = `
         <div id="dPad-wrapper"
             style="
-                position: relative;
-                width: 100vw;
-                height: 100vh;
+                position: fixed;
+                inset: 0;
                 overflow: hidden;
+                touch-action: manipulation;
             "
         >
 
-            <!-- CENTERED D-PAD CONTAINER -->
+            <!-- D-PAD -->
             <div id="dpad"
                 style="
                     position:absolute;
                     left:50%;
                     top:50%;
                     transform:translate(-50%,-50%);
-                    width:300px;
-                    height:300px;
+                    width:320px;
+                    height:320px;
+
+                    display:grid;
+                    grid-template-columns: repeat(3, 1fr);
+                    grid-template-rows: repeat(3, 1fr);
+                    gap:12px;
+
                     z-index:10;
                 "
             >
 
-                <!-- BUTTONS (perfect grid layout) -->
-                <div id="btn-up" class="dpad-btn" style="grid-area: up;"></div>
-                <div id="btn-left" class="dpad-btn" style="grid-area: left;"></div>
-                <div id="btn-right" class="dpad-btn" style="grid-area: right;"></div>
-                <div id="btn-down" class="dpad-btn" style="grid-area: down;"></div>
+                <div></div>
+                <div id="btn-up" class="dpad-btn"></div>
+                <div></div>
+
+                <div id="btn-left" class="dpad-btn"></div>
+                <div></div>
+                <div id="btn-right" class="dpad-btn"></div>
+
+                <div></div>
+                <div id="btn-down" class="dpad-btn"></div>
+                <div></div>
 
             </div>
 
@@ -197,11 +211,8 @@ export function createUI(container, socket) {
                     transform: translateX(-50%);
                     color: white;
                     font-size: 42px;
-                    font-family: Arial, sans-serif;
                     font-weight: bold;
-                    text-shadow: 0 0 10px rgb(23, 195, 0);
                     z-index: 10;
-                    user-select: none;
                 "
             >
                 Score: 0
@@ -209,7 +220,15 @@ export function createUI(container, socket) {
         </div>
         `;
 
-    // Grid layout for d-pad buttons
+    document.querySelectorAll(".dpad-btn").forEach(btn => {
+        btn.style.background = "rgba(255,255,255,0.25)";
+        btn.style.borderRadius = "18px";
+        btn.style.width = "100%";
+        btn.style.height = "100%";
+        btn.style.touchAction = "none";
+    });
+    
+        // Grid layout for d-pad buttons
     const dpadEl = document.getElementById("dpad");
 
     dpadEl.style.display = "grid";
@@ -228,28 +247,28 @@ export function createUI(container, socket) {
         btn.style.touchAction = "none";
     });
 
-    const canvas = document.createElement("canvas"), context = canvas.getContext("2d");
-    canvas.style.position = "absolute";
-    canvas.style.top = "0";
-    canvas.style.left = "0";
-    canvas.style.zIndex = "0";   // behind buttons
-    canvas.style.pointerEvents = "none"; // allows touches to pass through
+    //const canvas = document.createElement("canvas"), context = canvas.getContext("2d");
+    // canvas.style.position = "absolute";
+    // canvas.style.top = "0";
+    // canvas.style.left = "0";
+    // canvas.style.zIndex = "0";   // behind buttons
+    // canvas.style.pointerEvents = "none"; // allows touches to pass through
 
-    document.getElementById("dPad-wrapper").appendChild(canvas);
+    // document.getElementById("dPad-wrapper").appendChild(canvas);
 
     let width, height;
 
     let dpad = new DPad(socket); // Create a neew d-pad instance
 
-    function resizeCanvas() {
-        width = canvas.width = innerWidth;
-        height = canvas.height = innerHeight;
+    // function resizeCanvas() {
+    //     width = canvas.width = innerWidth;
+    //     height = canvas.height = innerHeight;
 
-        dpad.origin = new Vector2(width / 2, height / 2);
-    }
+    //     dpad.origin = new Vector2(width / 2, height / 2);
+    // }
 
-    resizeCanvas();
-    addEventListener("resize", resizeCanvas);
+    // resizeCanvas();
+    //addEventListener("resize", resizeCanvas);
     dpad.listener(); // Start listening for touch events
 
     // Convert HSV to RGB for background color
