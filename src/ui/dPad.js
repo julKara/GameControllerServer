@@ -70,9 +70,12 @@ export function createUI(container, socket) {
                     // VISUAL feedback (instant highlight)
                     el.style.background = "rgba(255,255,255,0.4)";
 
-                    // HAPTIC FEEDBACK (with fallback)
+                    // HAPTIC FEEDBACK (with fallback) (only on android)
                     if (navigator.vibrate) {
-                        navigator.vibrate(20);
+                        navigator.vibrate([10]);
+                    }
+                    else {
+                        console.log("Vibration not supported on this device");
                     }
                 });
 
@@ -123,7 +126,7 @@ export function createUI(container, socket) {
             const angle = Math.atan2(y, x);
 
             // DEBUGG
-            console.log(this.inputs);
+            //console.log(this.inputs);
 
             return { angle, strength: 1 };
         }
@@ -165,44 +168,27 @@ export function createUI(container, socket) {
             "
         >
 
-            <!-- D-PAD BUTTONS -->
-            <div id="btn-up" style="
-                position:absolute; left:50%; top:30%;
-                width:80px; height:80px;
-                transform:translate(-50%,-50%);
-                z-index:10;
-                background:rgba(255,255,255,0.1);
-                border-radius:12px;
-            "></div>
+            <!-- CENTERED D-PAD CONTAINER -->
+            <div id="dpad"
+                style="
+                    position:absolute;
+                    left:50%;
+                    top:50%;
+                    transform:translate(-50%,-50%);
+                    width:300px;
+                    height:300px;
+                    z-index:10;
+                "
+            >
 
-            <div id="btn-down" style="
-                position:absolute; left:50%; top:70%;
-                width:80px; height:80px;
-                transform:translate(-50%,-50%);
-                z-index:10;
-                background:rgba(255,255,255,0.1);
-                border-radius:12px;
-            "></div>
-            
-            <div id="btn-left" style="
-                position:absolute; left:30%; top:50%;
-                width:80px; height:80px;
-                transform:translate(-50%,-50%);
-                z-index:10;
-                background:rgba(255,255,255,0.1);
-                border-radius:12px;
-            "></div>
+                <!-- BUTTONS (perfect grid layout) -->
+                <div id="btn-up" class="dpad-btn" style="grid-area: up;"></div>
+                <div id="btn-left" class="dpad-btn" style="grid-area: left;"></div>
+                <div id="btn-right" class="dpad-btn" style="grid-area: right;"></div>
+                <div id="btn-down" class="dpad-btn" style="grid-area: down;"></div>
 
-            <div id="btn-right" style="
-                position:absolute; left:70%; top:50%;
-                width:80px; height:80px;
-                transform:translate(-50%,-50%);
-                z-index:10;
-                background:rgba(255,255,255,0.1);
-                border-radius:12px;
-            "></div>
+            </div>
 
-            <!-- SCORE -->
             <div id="scoreText"
                 style="
                     position: absolute;
@@ -213,7 +199,7 @@ export function createUI(container, socket) {
                     font-size: 42px;
                     font-family: Arial, sans-serif;
                     font-weight: bold;
-                    text-shadow: 0 0 10px rgba(0,0,0,0.5);
+                    text-shadow: 0 0 10px rgb(23, 195, 0);
                     z-index: 10;
                     user-select: none;
                 "
@@ -222,6 +208,25 @@ export function createUI(container, socket) {
             </div>
         </div>
         `;
+
+    // Grid layout for d-pad buttons
+    const dpadEl = document.getElementById("dpad");
+
+    dpadEl.style.display = "grid";
+    dpadEl.style.gridTemplateAreas = `
+        ".    up    ."
+        "left .   right"
+        ".   down   ."
+    `;
+    dpadEl.style.gridTemplateColumns = "1fr 1fr 1fr";
+    dpadEl.style.gridTemplateRows = "1fr 1fr 1fr";
+
+    document.querySelectorAll(".dpad-btn").forEach(btn => {
+        btn.style.background = "rgba(255,255,255,0.15)";
+        btn.style.borderRadius = "20px";
+        btn.style.margin = "10px";
+        btn.style.touchAction = "none";
+    });
 
     const canvas = document.createElement("canvas"), context = canvas.getContext("2d");
     canvas.style.position = "absolute";
@@ -352,7 +357,7 @@ export function createUI(container, socket) {
     // Main loop to update the d-pad and send input
     function loop() {
         background();       // Clear the canvas with the background color
-        dpad.update();      // Update and draw the d-pad
+        //dpad.update();      // Update and draw the d-pad
         sendInput();        // Send the d-pad input to the server
 
         requestAnimationFrame(loop);    // Schedule the next frame
