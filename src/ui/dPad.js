@@ -31,15 +31,9 @@ export function createUI(container, socket) {
         }
     }
 
-    // Function to draw a circle on the canvas
-    function circle(pos, radius, color){
-        context.beginPath();
-        context.arc(pos.x, pos.y, radius, 0, Math.PI * 2);
-        context.fillStyle = color;
-        context.fill();
-        context.closePath();
-    }
-
+    // -------------------------------------------------------------------------
+    // D-PAD CLASS
+    // -------------------------------------------------------------------------
     class DPad {
         
         constructor(socket) {
