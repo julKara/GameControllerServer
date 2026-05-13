@@ -225,6 +225,8 @@ export function createUI(container, socket) {
     // SAFARI ZOOM FIX (must be inside same file as requested)
     // -------------------------------------------------------------------------
 
+    document.getElementById("dPad-wrapper").style.background =  hsvToRgb(backgroundHue, backgroundSaturation, backgroundValue);
+    
     let lastTouchEnd = 0;
 
     // Prevent double-tap zoom
@@ -250,6 +252,8 @@ export function createUI(container, socket) {
         btn.style.height = "100%";
         btn.style.touchAction = "none";
         btn.style.transition = "all 0.1s ease";
+        btn.style.boxShadow = "0 4px 15px rgba(0,0,0,0.3)";
+        btn.style.backdropFilter = "blur(10px)";
     });
     
         // Grid layout for d-pad buttons
@@ -264,10 +268,10 @@ export function createUI(container, socket) {
     dpadEl.style.gridTemplateColumns = "1fr 1fr 1fr";
     dpadEl.style.gridTemplateRows = "1fr 1fr 1fr";
 
-    document.getElementById("btn-up").style.background = "rgba(0, 200, 255, 0.35)";
-    document.getElementById("btn-down").style.background = "rgba(255, 80, 80, 0.35)";
-    document.getElementById("btn-left").style.background = "rgba(255, 200, 0, 0.35)";
-    document.getElementById("btn-right").style.background = "rgba(100, 255, 100, 0.35)";
+    document.getElementById("btn-up").style.background = "rgba(0, 200, 255, 0.6)";
+    document.getElementById("btn-down").style.background = "rgba(255, 80, 80, 0.6)";
+    document.getElementById("btn-left").style.background = "rgba(255, 200, 0, 0.6)";
+    document.getElementById("btn-right").style.background = "rgba(100, 255, 100, 0.6)";
 
     //const canvas = document.createElement("canvas"), context = canvas.getContext("2d");
     // canvas.style.position = "absolute";
@@ -333,9 +337,10 @@ export function createUI(container, socket) {
         const color = hsvToRgb(backgroundHue, backgroundSaturation, backgroundValue);
 
         const wrapper = document.getElementById("dPad-wrapper");
-        if (wrapper) {
-            wrapper.style.background = color;
-        }
+
+        if (!wrapper) return; // (important for Safari)
+
+        wrapper.style.background = color;
     }
 
     // Score display
