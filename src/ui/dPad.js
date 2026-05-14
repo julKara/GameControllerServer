@@ -207,7 +207,7 @@ export function createUI(container, socket) {
             <div id="scoreText"
                 style="
                     position: absolute;
-                    bottom: 300vh;
+                    bottom: 30vh;
                     left: 50%;
                     transform: translateX(-50%);
                     color: white;
