@@ -143,7 +143,7 @@ export function createUI(container, socket) {
                     font-size: 42px;
                     font-family: Arial, sans-serif;
                     font-weight: bold;
-                    text-shadow: 0 0 10px rgba(0,0,0,0.5);
+                    text-shadow: 0 0 3vw rgba(0,0,0,0.5);
                     z-index: 10;
                     user-select: none;
                 "

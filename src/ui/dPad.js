@@ -178,13 +178,13 @@ export function createUI(container, socket) {
                     left:50%;
                     top:50%;
                     transform:translate(-50%,-50%);
-                    width: min(60vw, 360px);
-                    height: min(60vw, 360px);
+                    width: min(60vw, 96vw);
+                    height: min(60vw, 96vw);
 
                     display:grid;
                     grid-template-columns: repeat(3, 1fr);
                     grid-template-rows: repeat(3, 1fr);
-                    gap:12px;
+                    gap:3.7vw;
 
                     z-index:10;
                 "
@@ -247,13 +247,13 @@ export function createUI(container, socket) {
     }, { passive: false });
 
     document.querySelectorAll(".dpad-btn").forEach(btn => {
-        btn.style.borderRadius = "20px";
+        btn.style.borderRadius = "7vw";
         btn.style.width = "100%";
         btn.style.height = "100%";
         btn.style.touchAction = "none";
         btn.style.transition = "all 0.1s ease";
-        btn.style.boxShadow = "0 4px 15px rgba(0,0,0,0.3)";
-        btn.style.backdropFilter = "blur(10px)";
+        btn.style.boxShadow = "0 1.2vw 5vw rgba(0,0,0,0.3)";
+        btn.style.backdropFilter = "blur(3vw)";
     });
     
         // Grid layout for d-pad buttons
