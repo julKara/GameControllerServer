@@ -222,7 +222,7 @@ export function createUI(container, socket) {
         `;
 
     // -------------------------------------------------------------------------
-    // SAFARI ZOOM FIX (must be inside same file as requested)
+    // SAFARI ZOOM FIX
     // -------------------------------------------------------------------------
 
     document.getElementById("dPad-wrapper").style.background =  hsvToRgb(backgroundHue, backgroundSaturation, backgroundValue);
