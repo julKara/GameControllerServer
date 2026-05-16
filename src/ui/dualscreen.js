@@ -2,6 +2,11 @@ export function createUI(container, socket) {
 
     let zoom = 1.0;
     
+    // Background colors (HSV), set to match playercharacter color
+    let backgroundHue = 270; // Default hue
+    const backgroundSaturation = 0.8;
+    const backgroundValue = 0.9;
+    
     container.innerHTML = `
         <div id="mapWrapper"
             style="
@@ -19,8 +24,7 @@ export function createUI(container, socket) {
                 style="
                     width:100%;
                     height:100%;
-                    background-image:url('/maps/hideseek_map.png');
-                    background:red;
+                    background-image:url('./maps/hideseek_map.png');
                     background-size:100% 100%;
                     background-position:center;
                     background-repeat:no-repeat;
