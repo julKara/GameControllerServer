@@ -24,7 +24,7 @@ export function createUI(container, socket) {
                 style="
                     width:100%;
                     height:100%;
-                    background-image:url('./maps/hideseek_map.png');
+                    background-image:url('/maps/hideseek_map.png');
                     background-size:100% 100%;
                     background-position:center;
                     background-repeat:no-repeat;
