@@ -1,42 +1,50 @@
 export function createUI(container, socket) {
 
+    let zoom = 1.0;
+    
     container.innerHTML = `
         <div id="mapWrapper"
             style="
                 width:100vw;
-                height:100vh;
+                height:100dvh;
                 overflow:hidden;
-                position:relative;
+                position:fixed;
+                inset:0;
                 background:black;
+                touch-action:none;
             "
         >
-            <img
-                id="mapImage"
-                src="./maps/hideseek_map.png"
+
+            <div id="mapImage"
                 style="
                     width:100%;
                     height:100%;
-                    object-fit:contain;
+                    background-image:url('maps/hideseek_map.png');
+                    background:red;
+                    background-size:100% 100%;
+                    background-position:center;
+                    background-repeat:no-repeat;
                     touch-action:none;
-                    user-select:none;
                 "
-            />
+            ></div>
 
             <div id="playerMarker"
                 style="
                     position:absolute;
-                    width:20px;
-                    height:20px;
+                    width:18px;
+                    height:18px;
                     border-radius:50%;
                     background:red;
                     transform:translate(-50%, -50%);
                     pointer-events:none;
                     left:50%;
                     top:50%;
+                    border:2px solid white;
                 "
             ></div>
+
         </div>
-    `;
+        `;
 
     const mapImage = document.getElementById("mapImage");
 
@@ -57,7 +65,7 @@ export function createUI(container, socket) {
         console.log("Sent move: ", u, ", ", v);
     }
 
-    function handleTouch(clientX, clientY)
+    function handlePress(clientX, clientY)
     {
         const rect = mapImage.getBoundingClientRect();
 
@@ -65,15 +73,12 @@ export function createUI(container, socket) {
 
         let v = (clientY - rect.top) / rect.height;
 
-        // Clamp
         u = Math.max(0, Math.min(1, u));
         v = Math.max(0, Math.min(1, v));
 
-        // Move marker visually
         marker.style.left = `${u * 100}%`;
         marker.style.top = `${v * 100}%`;
 
-        // Send to Unreal
         sendMove(u, v);
     }
 
@@ -83,27 +88,15 @@ export function createUI(container, socket) {
 
         const touch = e.touches[0];
 
-        handleTouch(
+        handlePress(
             touch.clientX,
             touch.clientY
         );
-    });
-
-    mapImage.addEventListener("touchmove", e =>
-    {
-        e.preventDefault();
-
-        const touch = e.touches[0];
-
-        handleTouch(
-            touch.clientX,
-            touch.clientY
-        );
-    });
+    }, { passive:false });
 
     mapImage.addEventListener("click", e =>
     {
-        handleTouch(
+        handlePress(
             e.clientX,
             e.clientY
         );
