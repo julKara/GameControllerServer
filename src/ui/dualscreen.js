@@ -113,7 +113,17 @@ export function createUI(container, socket) {
 
         onMessage(data)
         {
-            // no messages expected for this UI
+            // Set background hue based on server message
+            if (data.type === "set_hue") {
+
+                backgroundHue = parseInt(data.hue);
+
+                // Clamp to valid HSV hue range
+                if (backgroundHue < 0) backgroundHue = 0;
+                if (backgroundHue > 360) backgroundHue = 360;
+
+                console.log("Updated background hue:", backgroundHue);
+            }
         },
 
         destroy()
