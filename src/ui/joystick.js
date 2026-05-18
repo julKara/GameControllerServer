@@ -323,6 +323,4 @@ export function createUI(container, socket) {
             container.innerHTML = "";
         }
     };
-
-    // Utility functions -------------------------------------------------------------------------
 }
