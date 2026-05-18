@@ -38,6 +38,7 @@ export function createUI(container, socket) {
                     font-family:Arial;
                     font-weight:bold;
                     opacity:0.85;
+                    pointer-events:none;
                 "
             >
                 TAP
