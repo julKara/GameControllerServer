@@ -121,6 +121,10 @@ export function createUI(container, socket) {
 
                 console.log("Updated background hue:", backgroundHue);
             }
+            if (data.type === "player_pos") {
+                marker.style.left = `${data.u * 100}%`;
+                marker.style.top = `${data.v * 100}%`;
+            }
         },
 
         destroy()
