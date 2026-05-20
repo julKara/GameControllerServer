@@ -53,6 +53,7 @@ export function createUI(container, socket) {
     const mapImage = document.getElementById("mapImage");
 
     const marker = document.getElementById("playerMarker");
+    marker.style.background =  hsvToRgb(backgroundHue, backgroundSaturation, backgroundValue);
 
     function sendMove(u, v)
     {
@@ -110,7 +111,7 @@ export function createUI(container, socket) {
 
         onMessage(data)
         {
-            // Set background hue based on server message
+            // Set cursor hue based on server message
             if (data.type === "set_hue") {
 
                 backgroundHue = parseInt(data.hue);
@@ -119,7 +120,7 @@ export function createUI(container, socket) {
                 if (backgroundHue < 0) backgroundHue = 0;
                 if (backgroundHue > 360) backgroundHue = 360;
 
-                console.log("Updated background hue:", backgroundHue);
+                console.log("Updated cursor hue:", backgroundHue);
             }
             // if (data.type === "player_pos") {
             //     marker.style.left = `${data.u * 100}%`;
