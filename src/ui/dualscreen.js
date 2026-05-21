@@ -119,8 +119,8 @@ export function createUI(container, socket) {
         const rotatedU = 1 - v;
         const rotatedV = u;
 
-        marker.style.left = `${rotatedU * 100}%`;
-        marker.style.top = `${rotatedV * 100}%`;
+        marker.style.left = `${u * 100}%`;
+        marker.style.top = `${v * 100}%`;
 
         sendMove(rotatedU, rotatedV);
     }
