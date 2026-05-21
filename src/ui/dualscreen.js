@@ -115,10 +115,14 @@ export function createUI(container, socket) {
         u = Math.max(0, Math.min(1, u));
         v = Math.max(0, Math.min(1, v));
 
-        marker.style.left = `${u * 100}%`;
-        marker.style.top = `${v * 100}%`;
+        // Rotate since map is rotated 90 degrees clockwise
+        const rotatedU = v;
+        const rotatedV = 1 - u;
 
-        sendMove(u, v);
+        marker.style.left = `${rotatedU * 100}%`;
+        marker.style.top = `${rotatedV * 100}%`;
+
+        sendMove(rotatedU, rotatedV);
     }
 
     mapImage.addEventListener("touchstart", e =>
