@@ -46,14 +46,14 @@ export function createUI(container, socket) {
 
             <div id="scoreText"
                 style="
-                    position:absolute;
-                    bottom:40px;
-                    left:50%;
-                    transform:translateX(-50%);
-                    color:white;
-                    font-size:42px;
-                    font-family:Arial;
-                    font-weight:bold;
+                    position: absolute;
+                    bottom: 10vh;
+                    left: 50%;
+                    transform: translateX(-50%);
+                    color: white;
+                    font-size: 42px;
+                    font-weight: bold;
+                    z-index: 10;
                 "
             >
                 Score: 0
