@@ -53,6 +53,40 @@ export function createUI(container, socket) {
     const mapImage = document.getElementById("mapImage");
 
     const marker = document.getElementById("playerMarker");
+
+    // Convert HSV to RGB for background color
+    function hsvToRgb(h, s, v) {
+        let c = v * s;
+        let x = c * (1 - Math.abs((h / 60) % 2 - 1));
+        let m = v - c;
+
+        let r = 0, g = 0, b = 0;
+
+        if (h >= 0 && h < 60) {
+            r = c; g = x; b = 0;
+        }
+        else if (h < 120) {
+            r = x; g = c; b = 0;
+        }
+        else if (h < 180) {
+            r = 0; g = c; b = x;
+        }
+        else if (h < 240) {
+            r = 0; g = x; b = c;
+        }
+        else if (h < 300) {
+            r = x; g = 0; b = c;
+        }
+        else {
+            r = c; g = 0; b = x;
+        }
+
+        r = Math.round((r + m) * 255);
+        g = Math.round((g + m) * 255);
+        b = Math.round((b + m) * 255);
+
+        return `rgb(${r}, ${g}, ${b})`;
+    } 
     marker.style.background =  hsvToRgb(backgroundHue, backgroundSaturation, backgroundValue);
 
     function sendMove(u, v)
@@ -118,7 +152,9 @@ export function createUI(container, socket) {
 
                 // Clamp to valid HSV hue range
                 if (backgroundHue < 0) backgroundHue = 0;
-                if (backgroundHue > 360) backgroundHue = 360;
+                if (backgroundHue > 359) backgroundHue = 359;
+
+                marker.style.background = hsvToRgb(backgroundHue, backgroundSaturation, backgroundValue);
 
                 console.log("Updated cursor hue:", backgroundHue);
             }
