@@ -22,18 +22,12 @@ export function createUI(container, socket) {
 
             <div id="mapImage"
                 style="
-                    position:absolute;
-                    width:min(100vw, 100dvh);
-                    height:min(100vw, 100dvh);
-                    left:50%;
-                    top:50%;
-                    transform:translate(-50%, -50%);
-
+                    width:100%;
+                    height:100%;
                     background-image:url('./ui/maps/hideseek_map.png');
-                    background-size:contain;
+                    background-size:100% 100%;
                     background-position:center;
                     background-repeat:no-repeat;
-
                     touch-action:none;
                 "
             ></div>
@@ -115,21 +109,20 @@ export function createUI(container, socket) {
         const rect = mapImage.getBoundingClientRect();
 
         let u = (clientX - rect.left) / rect.width;
+
         let v = (clientY - rect.top) / rect.height;
 
-        // Clamp UV FIRST (this fixes border behavior)
         u = Math.max(0, Math.min(1, u));
         v = Math.max(0, Math.min(1, v));
 
-        // Marker uses SAME clamped coordinates
-        marker.style.left = `${u * 50}%`;
-        marker.style.top = `${v * 50}%`;
+        // Rotate since map is rotated 90 degrees clockwise
+        const rotatedV = 1 - v;
+        const rotatedU = u;
 
-        // Only axis correction for Unreal mapping
-        const worldU = 1.0 - u;
-        const worldV = v;
+        marker.style.left = `${u * 100}%`;
+        marker.style.top = `${v * 100}%`;
 
-        sendMove(worldU, worldV);
+        sendMove(rotatedU, rotatedV);
     }
 
     mapImage.addEventListener("touchstart", e =>
