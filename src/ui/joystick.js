@@ -221,73 +221,110 @@ export function createUI(container, socket) {
         scoreText.innerText = `Score: ${currentScore}`;
     }
 
-    // CONTROLLER/INPUTS -------------------------------------------------------------------------
-    const SEND_INTERVAL = 50; // 20 Hz
-    let lastSend = 0;
+    // CONTROLLER / INPUTS --------------------------------------------------
 
-    let lastAngle = 0;
-    let lastStrength = 0;
+    // Send rate (messages per second)
+    const SEND_RATE = 10;   // 10 Hz is for large-multiplayer
 
+    // Derived interval in milliseconds
+    const SEND_INTERVAL = 1000 / SEND_RATE;
+
+    // Input filtering (minimum change to send update)
+    const DEADZONE = 0.05;
     const ANGLE_EPSILON = 0.02;
     const STRENGTH_EPSILON = 0.02;
 
+    // Last sent state
+    let lastAngle = 0;
+    let lastStrength = 0;
+    let lastSentTime = 0;
     let isStopped = true;
-    let currentScore = 0;   // Track the current score to update the score display
+
+    // Quantize values to reduce bandwidth and spam
+    function quantize(value, step) {
+        return Math.round(value / step) * step;
+    }
 
     function sendInput() {
-        if (socket.readyState !== WebSocket.OPEN) return;
 
+        // Check socket
+        if (socket.readyState !== WebSocket.OPEN) {
+            return;
+        }
+
+        // Rate limiting
         const now = performance.now();
-        if (now - lastSend < SEND_INTERVAL) return;
+        if (now - lastSentTime < SEND_INTERVAL) {
+            return;
+        }
 
         const input = joystick.getInput();
 
-        // HARD STOP
-        if (input.strength < 0.05) {
+        // Deadzone
+        if (input.strength < DEADZONE) {
+
+            // Only send stop ONCE
             if (!isStopped) {
+
+                // Send input to Unreal
                 socket.send(JSON.stringify({
                     type: "movement",
                     user: window.USER_ID,
                     angle: 0,
                     strength: 0
                 }));
+
                 isStopped = true;
+
+                // Update state
+                lastAngle = 0;
+                lastStrength = 0;
+                lastSentTime = now;
             }
+
             return;
         }
 
         isStopped = false;
 
-        // Only send if changed
-        if (
-            Math.abs(input.angle - lastAngle) < ANGLE_EPSILON &&
-            Math.abs(input.strength - lastStrength) < STRENGTH_EPSILON
-        ) {
+        // Quantize to reduce tiny changes
+        const angle = quantize(input.angle, 0.02);
+        const strength = quantize(input.strength, 0.02);
+
+        // Only send if changed enough
+        const angleChanged = Math.abs(angle - lastAngle) >= ANGLE_EPSILON;
+        const strengthChanged = Math.abs(strength - lastStrength) >= STRENGTH_EPSILON;
+
+        if (!angleChanged && !strengthChanged) {
             return;
         }
 
-        lastSend = now;
-        lastAngle = input.angle;
-        lastStrength = input.strength;
+        // Save state
+        lastAngle = angle;
+        lastStrength = strength;
+        lastSentTime = now;
 
+        // Send packet
         socket.send(JSON.stringify({
             type: "movement",
             user: window.USER_ID,
-            angle: input.angle,
-            strength: input.strength
+            angle: angle,
+            strength: strength
         }));
     }
 
     // Main loop to update the joystick and send input
     function loop() {
-        background();       // Clear the canvas with the background color
-        joystick.update();  // Update and draw the joystick
-        sendInput();        // Send the joystick input to the server
+        background();
+        joystick.update();
 
-        requestAnimationFrame(loop);    // Schedule the next frame
+        requestAnimationFrame(loop);
     }
 
     loop();
+
+    // Network updates run independently based on timer, not tied to frame rate
+    setInterval(sendInput, SEND_INTERVAL);
     
     return {
 
