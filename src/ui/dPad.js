@@ -354,7 +354,7 @@ export function createUI(container, socket) {
     }
 
     // CONTROLLER/INPUTS -------------------------------------------------------------------------
-    const SEND_INTERVAL = 10; // 10 Hz
+    const SEND_INTERVAL = 5; // 10 Hz
     let lastSend = 0;
 
     let lastAngle = 0;

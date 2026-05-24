@@ -226,7 +226,7 @@ export function createUI(container, socket) {
     // CONTROLLER / INPUTS --------------------------------------------------
 
     // Send rate (messages per second)
-    const SEND_RATE = 10;   // 10 Hz is for large-multiplayer
+    const SEND_RATE = 5;   // 10 Hz is for large-multiplayer
 
     // Derived interval in milliseconds
     const SEND_INTERVAL = 1000 / SEND_RATE;
