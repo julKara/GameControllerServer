@@ -266,22 +266,16 @@ export function createUI(container, socket) {
             // Only send stop ONCE
             if (!isStopped) {
 
-                const x = Math.cos(angle) * strength;
-                const y = Math.sin(angle) * strength;
-
-                // Send packet
                 socket.send(JSON.stringify({
                     type: "movement",
                     user: window.USER_ID,
-                    // angle: angle,
-                    // strength: strength
-                    x: x,
-                    y: y
+                    x: 0,
+                    y: 0
                 }));
 
                 isStopped = true;
 
-                // Update state
+                // Reset local cached state
                 lastAngle = 0;
                 lastStrength = 0;
                 lastSentTime = now;
@@ -324,7 +318,8 @@ export function createUI(container, socket) {
     }
 
     // Main render loop
-    let animationFrameId;
+    let animationFrameId = null;
+    let sendIntervalId = null;
 
     function loop() {
 
@@ -338,11 +333,16 @@ export function createUI(container, socket) {
     loop();
 
     // Start network loop
-    const sendIntervalId = setInterval(sendInput, SEND_INTERVAL);
+    sendIntervalId = setInterval(sendInput, SEND_INTERVAL);
     
     return {
 
         onMessage(data) {
+
+            // Parse websocket string messages
+            if (typeof data === "string") {
+                data = JSON.parse(data);
+            }
 
             // Set background hue based on server message
             if (data.type === "set_hue") {
