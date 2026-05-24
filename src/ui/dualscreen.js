@@ -122,12 +122,12 @@ export function createUI(container, socket) {
         v = Math.max(0, Math.min(1, v));
 
         // Marker uses SAME clamped coordinates
-        marker.style.left = `${u * 100}%`;
-        marker.style.top = `${v * 100}%`;
+        marker.style.left = `${u * 50}%`;
+        marker.style.top = `${v * 50}%`;
 
         // Only axis correction for Unreal mapping
-        const worldU = u;
-        const worldV = 1.0 - v;
+        const worldU = 1.0 - u;
+        const worldV = v;
 
         sendMove(worldU, worldV);
     }
