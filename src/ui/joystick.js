@@ -313,18 +313,22 @@ export function createUI(container, socket) {
         }));
     }
 
-    // Main loop to update the joystick and send input
+    // Main render loop
+    let animationFrameId;
+
     function loop() {
+
         background();
         joystick.update();
 
-        requestAnimationFrame(loop);
+        animationFrameId = requestAnimationFrame(loop);
     }
 
+    // Start render loop
     loop();
 
-    // Network updates run independently based on timer, not tied to frame rate
-    setInterval(sendInput, SEND_INTERVAL);
+    // Start network loop
+    const sendIntervalId = setInterval(sendInput, SEND_INTERVAL);
     
     return {
 
@@ -353,7 +357,11 @@ export function createUI(container, socket) {
         },
 
         destroy() {
-            clearInterval(loop);
+
+            cancelAnimationFrame(animationFrameId);
+
+            clearInterval(sendIntervalId);
+
             container.innerHTML = "";
         }
     };
