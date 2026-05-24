@@ -27,7 +27,7 @@ export function createUI(container, socket) {
                     height:min(100vw, 100dvh);
                     left:50%;
                     top:50%;
-                    transform:translate(-50%, -50%) rotate(90deg);
+                    transform:translate(-50%, -50%);
 
                     background-image:url('./ui/maps/hideseek_map.png');
                     background-size:contain;
