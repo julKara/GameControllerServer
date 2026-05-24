@@ -22,12 +22,18 @@ export function createUI(container, socket) {
 
             <div id="mapImage"
                 style="
-                    width:100%;
-                    height:100%;
+                    position:absolute;
+                    width:min(100vw, 100dvh);
+                    height:min(100vw, 100dvh);
+                    left:50%;
+                    top:50%;
+                    transform:translate(-50%, -50%) rotate(90deg);
+
                     background-image:url('./ui/maps/hideseek_map.png');
-                    background-size:100% 100%;
+                    background-size:contain;
                     background-position:center;
                     background-repeat:no-repeat;
+
                     touch-action:none;
                 "
             ></div>
@@ -109,20 +115,21 @@ export function createUI(container, socket) {
         const rect = mapImage.getBoundingClientRect();
 
         let u = (clientX - rect.left) / rect.width;
-
         let v = (clientY - rect.top) / rect.height;
 
         u = Math.max(0, Math.min(1, u));
         v = Math.max(0, Math.min(1, v));
 
-        // Rotate since map is rotated 90 degrees clockwise
-        const rotatedU = v;
-        const rotatedV = 1 - u;
+        // Convert from rotated phone-map space
+        // to Unreal world UV space
+        const worldU = v;
+        const worldV = 1.0 - u;
 
+        // Visual marker stays in touch-space
         marker.style.left = `${u * 100}%`;
         marker.style.top = `${v * 100}%`;
 
-        sendMove(rotatedU, rotatedV);
+        sendMove(worldU, worldV);
     }
 
     mapImage.addEventListener("touchstart", e =>
