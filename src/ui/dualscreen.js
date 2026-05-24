@@ -116,8 +116,8 @@ export function createUI(container, socket) {
         v = Math.max(0, Math.min(1, v));
 
         // Rotate since map is rotated 90 degrees clockwise
-        const rotatedV = -v;
-        const rotatedU = 1 - u;
+        const rotatedV = -u;
+        const rotatedU = v;
 
         marker.style.left = `${u * 100}%`;
         marker.style.top = `${v * 100}%`;
