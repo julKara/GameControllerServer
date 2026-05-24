@@ -117,17 +117,17 @@ export function createUI(container, socket) {
         let u = (clientX - rect.left) / rect.width;
         let v = (clientY - rect.top) / rect.height;
 
+        // Clamp UV FIRST (this fixes border behavior)
         u = Math.max(0, Math.min(1, u));
         v = Math.max(0, Math.min(1, v));
 
-        // Convert from rotated phone-map space
-        // to Unreal world UV space
-        const worldU = u;
-        const worldV = 1.0 - v;
-
-        // Visual marker stays in touch-space
+        // Marker uses SAME clamped coordinates
         marker.style.left = `${u * 100}%`;
         marker.style.top = `${v * 100}%`;
+
+        // Only axis correction for Unreal mapping
+        const worldU = u;
+        const worldV = 1.0 - v;
 
         sendMove(worldU, worldV);
     }
