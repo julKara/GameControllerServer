@@ -122,8 +122,8 @@ export function createUI(container, socket) {
 
         // Convert from rotated phone-map space
         // to Unreal world UV space
-        const worldU = v;
-        const worldV = 1.0 - u;
+        const worldU = u;
+        const worldV = 1.0 - v;
 
         // Visual marker stays in touch-space
         marker.style.left = `${u * 100}%`;
