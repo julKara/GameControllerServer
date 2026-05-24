@@ -266,12 +266,17 @@ export function createUI(container, socket) {
             // Only send stop ONCE
             if (!isStopped) {
 
-                // Send input to Unreal
+                const x = Math.cos(angle) * strength;
+                const y = Math.sin(angle) * strength;
+
+                // Send packet
                 socket.send(JSON.stringify({
                     type: "movement",
                     user: window.USER_ID,
-                    angle: 0,
-                    strength: 0
+                    // angle: angle,
+                    // strength: strength
+                    x: x,
+                    y: y
                 }));
 
                 isStopped = true;
@@ -304,12 +309,17 @@ export function createUI(container, socket) {
         lastStrength = strength;
         lastSentTime = now;
 
+        const x = Math.cos(angle) * strength;
+        const y = Math.sin(angle) * strength;
+
         // Send packet
         socket.send(JSON.stringify({
             type: "movement",
             user: window.USER_ID,
-            angle: angle,
-            strength: strength
+            // angle: angle,
+            // strength: strength
+            x: x,
+            y: y
         }));
     }
 
