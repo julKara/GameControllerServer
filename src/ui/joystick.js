@@ -211,6 +211,8 @@ export function createUI(container, socket) {
         context.fillRect(0, 0, width, height);
     }
 
+    let currentScore = 0;
+
     // Score display
     function updateScoreDisplay() {
 
@@ -287,8 +289,11 @@ export function createUI(container, socket) {
         isStopped = false;
 
         // Quantize to reduce tiny changes
-        const angle = quantize(input.angle, 0.02);
-        const strength = quantize(input.strength, 0.02);
+        // const angle = quantize(input.angle, 0.02);
+        // const strength = quantize(input.strength, 0.02);
+
+        const angle = input.angle;
+        const strength = input.strength;    
 
         // Only send if changed enough
         const angleChanged = Math.abs(angle - lastAngle) >= ANGLE_EPSILON;
