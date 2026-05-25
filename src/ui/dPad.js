@@ -5,6 +5,9 @@ export function createUI(container, socket) {
     const backgroundSaturation = 0.8;
     const backgroundValue = 0.9;
 
+    // Distance moved per tap
+    const TAP_DISTANCE = 0.35;  // [0,1] range representing percentage of max speed
+
     // Classes -------------------------------------------------------------------------
     class Vector2{
         constructor(x, y){
@@ -35,131 +38,78 @@ export function createUI(container, socket) {
     // D-PAD CLASS
     // -------------------------------------------------------------------------
     class DPad {
-        
-        constructor(socket) {
-            this.socket = socket;
 
-            // Track active inputs
-            this.inputs = {
-                up: false,
-                down: false,
-                left: false,
-                right: false
-            };
-        }
+    constructor(socket) {
 
-        // -------------------------------------------------------------------------
-        // INPUT LISTENERS (FIXED: uses pointer events = MUCH more reliable)
-        // -------------------------------------------------------------------------
-        listener() {
-
-            const bindButton = (id, key) => {
-                const el = document.getElementById(id);
-
-                el.style.touchAction = "none";
-
-                // PRESS
-                el.addEventListener("pointerdown", (e) => {
-                    e.preventDefault();
-
-                    // Capture pointer (fixes multi-tap issue)
-                    el.setPointerCapture(e.pointerId);
-
-                    this.inputs[key] = true;
-
-                    // VISUAL feedback (instant highlight)
-                    el.style.filter = "brightness(1.8)";
-                    el.style.transform = "scale(0.9)";
-                    el.style.transform = "scale(0.9)";
-
-                    // HAPTIC FEEDBACK (with fallback) (only on android)
-                    if (navigator.vibrate) {
-                        navigator.vibrate([10]);
-                    }
-                    else {
-                        console.log("Vibration not supported on this device");
-                    }
-                });
-
-                // RELEASE
-                const release = (e) => {
-                    this.inputs[key] = false;
-
-                    el.style.filter = "brightness(1)";
-                    el.style.transform = "scale(1)";
-
-                    try {
-                        el.releasePointerCapture(e.pointerId);
-                    } catch {}
-                };
-
-                el.addEventListener("pointerup", release);
-                el.addEventListener("pointercancel", release);
-                el.addEventListener("pointerleave", release);
-            };
-
-            bindButton("btn-up", "up");
-            bindButton("btn-down", "down");
-            bindButton("btn-left", "left");
-            bindButton("btn-right", "right");
-        }
-
-        // -------------------------------------------------------------------------
-        // CORE INPUT LOGIC
-        // -------------------------------------------------------------------------
-        getInput() {
-
-            let x = 0;
-            let y = 0;
-
-            if (this.inputs.left)  x -= 1;
-            if (this.inputs.right) x += 1;
-            if (this.inputs.up)    y -= 1;
-            if (this.inputs.down)  y += 1;
-
-            if (x === 0 && y === 0) {
-                return { angle: 0, strength: 0 };
-            }
-
-            // Normalize (so diagonals aren't faster)
-            const length = Math.sqrt(x * x + y * y);
-            x /= length;
-            y /= length;
-
-            const angle = Math.atan2(y, x);
-
-            // DEBUGG
-            //console.log(this.inputs);
-
-            return { angle, strength: 1 };
-        }
-
-        // -------------------------------------------------------------------------
-        // VISUAL
-        // -------------------------------------------------------------------------
-        draw() {
-
-            const size = 80;
-            const cx = width / 2;
-            const cy = height / 2;
-
-            const drawBtn = (x, y, active) => {
-                context.fillStyle = active ? "#aaaaaa" : "#555555";
-                context.fillRect(x - size/2, y - size/2, size, size);
-            };
-
-            drawBtn(cx, cy - size, this.inputs.up);
-            drawBtn(cx, cy + size, this.inputs.down);
-            drawBtn(cx - size, cy, this.inputs.left);
-            drawBtn(cx + size, cy, this.inputs.right);
-        }
-
-        update() {
-            this.draw();
-        }
+        this.socket = socket;
     }
 
-        // Main -------------------------------------------------------------------------
+    listener() {
+
+        const bindButton = (id, x, y) => {
+
+            const el = document.getElementById(id);
+
+            el.style.touchAction = "none";
+
+            el.addEventListener("pointerdown", (e) => {
+
+                e.preventDefault();
+
+                // Visual feedback
+                el.style.filter = "brightness(1.8)";
+                el.style.transform = "scale(0.92)";
+
+                // Haptic
+                if (navigator.vibrate) {
+                    navigator.vibrate(10);
+                }
+
+                // Send single movement packet
+                this.sendTapMovement(x, y);
+
+                // Release visual shortly after tap
+                setTimeout(() => {
+                    el.style.filter = "brightness(1)";
+                    el.style.transform = "scale(1)";
+                }, 80);
+            });
+        };
+
+        bindButton("btn-up", 0, -1);
+        bindButton("btn-down", 0, 1);
+        bindButton("btn-left", -1, 0);
+        bindButton("btn-right", 1, 0);
+    }
+
+    sendTapMovement(x, y) {
+
+        if (socket.readyState !== WebSocket.OPEN) {
+            return;
+        }
+
+        // Normalize diagonal movement
+        const length = Math.sqrt(x * x + y * y);
+
+        if (length > 0) {
+            x /= length;
+            y /= length;
+        }
+
+        // Adjustable movement distance
+        x *= TAP_DISTANCE;
+        y *= TAP_DISTANCE;
+
+        socket.send(JSON.stringify({
+            type: "movement",
+            user: window.USER_ID,
+            x: x,
+            y: y
+        }));
+    }
+}
+
+    // Main -------------------------------------------------------------------------
 
     container.innerHTML = `
         <div id="dPad-wrapper"
@@ -178,13 +128,15 @@ export function createUI(container, socket) {
                     left:50%;
                     top:50%;
                     transform:translate(-50%,-50%);
-                    width: min(60vw, 96vw);
-                    height: min(60vw, 96vw);
+                    width: 100vw;
+                    height: 100vh;  
 
                     display:grid;
                     grid-template-columns: repeat(3, 1fr);
                     grid-template-rows: repeat(3, 1fr);
-                    gap:3.7vw;
+                    gap:0vw;
+                    padding: 4vw;
+                    box-sizing: border-box;
 
                     z-index:10;
                 "
@@ -247,16 +199,23 @@ export function createUI(container, socket) {
     }, { passive: false });
 
     document.querySelectorAll(".dpad-btn").forEach(btn => {
-        btn.style.borderRadius = "7vw";
+
+        btn.style.borderRadius = "5vw";
+
         btn.style.width = "100%";
         btn.style.height = "100%";
+
+        btn.style.minWidth = "28vw";
+        btn.style.minHeight = "28vw";
+
         btn.style.touchAction = "none";
-        btn.style.transition = "all 0.1s ease";
-        btn.style.boxShadow = "0 1.2vw 5vw rgba(0,0,0,0.3)";
-        btn.style.backdropFilter = "blur(3vw)";
+        btn.style.transition = "all 0.08s ease";
+
+        btn.style.boxShadow = "0 1vw 4vw rgba(0,0,0,0.25)";
+        btn.style.backdropFilter = "blur(2vw)";
     });
     
-        // Grid layout for d-pad buttons
+    // Grid layout for d-pad buttons
     const dpadEl = document.getElementById("dpad");
 
     dpadEl.style.display = "grid";
@@ -265,8 +224,8 @@ export function createUI(container, socket) {
         "left .   right"
         ".   down   ."
     `;
-    dpadEl.style.gridTemplateColumns = "1fr 1fr 1fr";
-    dpadEl.style.gridTemplateRows = "1fr 1fr 1fr";
+    dpadEl.style.gridTemplateColumns = "1fr 1.2fr 1fr";
+    dpadEl.style.gridTemplateRows = "1fr 1.2fr 1fr";
 
     document.getElementById("btn-up").style.background = "rgba(0, 200, 255, 0.6)";
     document.getElementById("btn-down").style.background = "rgba(255, 80, 80, 0.6)";
@@ -355,30 +314,6 @@ export function createUI(container, socket) {
 
     // CONTROLLER / INPUTS --------------------------------------------------
 
-    // Send rate (messages per second)
-    const SEND_RATE = 5;
-
-    // Derived interval in milliseconds
-    const SEND_INTERVAL = 1000 / SEND_RATE;
-
-    // Input filtering
-    const DEADZONE = 0.05;
-    const ANGLE_EPSILON = 0.02;
-    const STRENGTH_EPSILON = 0.02;
-
-    // Last sent state
-    let lastAngle = 0;
-    let lastStrength = 0;
-    let lastSentTime = 0;
-    let isStopped = true;
-
-    let currentScore = 0;
-
-    // Quantize helper (optional)
-    function quantize(value, step) {
-        return Math.round(value / step) * step;
-    }
-
     function sendInput() {
 
         // Check socket
@@ -386,63 +321,10 @@ export function createUI(container, socket) {
             return;
         }
 
-        // Rate limiting
-        const now = performance.now();
-
-        if (now - lastSentTime < SEND_INTERVAL) {
-            return;
-        }
-
         const input = dpad.getInput();
-
-        // Deadzone / stop
-        if (input.strength < DEADZONE) {
-
-            // Only send stop once
-            if (!isStopped) {
-
-                socket.send(JSON.stringify({
-                    type: "movement",
-                    user: window.USER_ID,
-                    x: 0,
-                    y: 0
-                }));
-
-                isStopped = true;
-
-                // Reset cached state
-                lastAngle = 0;
-                lastStrength = 0;
-                lastSentTime = now;
-            }
-
-            return;
-        }
-
-        isStopped = false;
-
-        // Optional quantization
-        // const angle = quantize(input.angle, 0.02);
-        // const strength = quantize(input.strength, 0.02);
 
         const angle = input.angle;
         const strength = input.strength;
-
-        // Only send if changed enough
-        const angleChanged =
-            Math.abs(angle - lastAngle) >= ANGLE_EPSILON;
-
-        const strengthChanged =
-            Math.abs(strength - lastStrength) >= STRENGTH_EPSILON;
-
-        if (!angleChanged && !strengthChanged) {
-            return;
-        }
-
-        // Save state
-        lastAngle = angle;
-        lastStrength = strength;
-        lastSentTime = now;
 
         const x = Math.cos(angle) * strength;
         const y = Math.sin(angle) * strength;
@@ -456,24 +338,15 @@ export function createUI(container, socket) {
         }));
     }
 
-    // Main render loop
-    let animationFrameId = null;
-    let sendIntervalId = null;
-
     function loop() {
 
         background();
-
-        // dpad.update();
 
         animationFrameId = requestAnimationFrame(loop);
     }
 
     // Start render loop
     loop();
-
-    // Start network loop
-    sendIntervalId = setInterval(sendInput, SEND_INTERVAL);
     
     return {
 
