@@ -353,65 +353,127 @@ export function createUI(container, socket) {
         scoreText.innerText = `Score: ${currentScore}`;
     }
 
-    // CONTROLLER/INPUTS -------------------------------------------------------------------------
-    const SEND_INTERVAL = 5; // 10 Hz
-    let lastSend = 0;
+    // CONTROLLER / INPUTS --------------------------------------------------
 
-    let lastAngle = 0;
-    let lastStrength = 0;
+    // Send rate (messages per second)
+    const SEND_RATE = 5;
 
+    // Derived interval in milliseconds
+    const SEND_INTERVAL = 1000 / SEND_RATE;
+
+    // Input filtering
+    const DEADZONE = 0.05;
     const ANGLE_EPSILON = 0.02;
     const STRENGTH_EPSILON = 0.02;
 
+    // Last sent state
+    let lastAngle = 0;
+    let lastStrength = 0;
+    let lastSentTime = 0;
     let isStopped = true;
-    let currentScore = 0;   // Track the current score to update the score display
+
+    let currentScore = 0;
+
+    // Quantize helper (optional)
+    function quantize(value, step) {
+        return Math.round(value / step) * step;
+    }
 
     function sendInput() {
 
-        if (socket.readyState !== WebSocket.OPEN) return;
+        // Check socket
+        if (socket.readyState !== WebSocket.OPEN) {
+            return;
+        }
 
+        // Rate limiting
         const now = performance.now();
-        if (now - lastSend < SEND_INTERVAL) return;
+
+        if (now - lastSentTime < SEND_INTERVAL) {
+            return;
+        }
 
         const input = dpad.getInput();
 
-        // STOP
-        if (input.strength === 0) {
+        // Deadzone / stop
+        if (input.strength < DEADZONE) {
+
+            // Only send stop once
             if (!isStopped) {
+
                 socket.send(JSON.stringify({
                     type: "movement",
                     user: window.USER_ID,
-                    angle: 0,
-                    strength: 0
+                    x: 0,
+                    y: 0
                 }));
+
                 isStopped = true;
+
+                // Reset cached state
+                lastAngle = 0;
+                lastStrength = 0;
+                lastSentTime = now;
             }
+
             return;
         }
 
         isStopped = false;
 
-        // Always send while holding (DO NOT compare with lastAngle anymore)
-        lastSend = now;
+        // Optional quantization
+        // const angle = quantize(input.angle, 0.02);
+        // const strength = quantize(input.strength, 0.02);
 
+        const angle = input.angle;
+        const strength = input.strength;
+
+        // Only send if changed enough
+        const angleChanged =
+            Math.abs(angle - lastAngle) >= ANGLE_EPSILON;
+
+        const strengthChanged =
+            Math.abs(strength - lastStrength) >= STRENGTH_EPSILON;
+
+        if (!angleChanged && !strengthChanged) {
+            return;
+        }
+
+        // Save state
+        lastAngle = angle;
+        lastStrength = strength;
+        lastSentTime = now;
+
+        const x = Math.cos(angle) * strength;
+        const y = Math.sin(angle) * strength;
+
+        // Send packet
         socket.send(JSON.stringify({
             type: "movement",
             user: window.USER_ID,
-            angle: input.angle,
-            strength: input.strength
+            x: x,
+            y: y
         }));
     }
 
-    // Main loop to update the d-pad and send input
-    function loop() {
-        background();       // Clear the canvas with the background color
-        //dpad.update();      // Update and draw the d-pad
-        sendInput();        // Send the d-pad input to the server
+    // Main render loop
+    let animationFrameId = null;
+    let sendIntervalId = null;
 
-        requestAnimationFrame(loop);    // Schedule the next frame
+    function loop() {
+
+        background();
+
+        // dpad.update();
+
+        animationFrameId = requestAnimationFrame(loop);
     }
 
+    // Start render loop
     loop();
+
+    // Start network loop
+    sendIntervalId = setInterval(sendInput, SEND_INTERVAL);
     
     return {
 
@@ -440,7 +502,11 @@ export function createUI(container, socket) {
         },
 
         destroy() {
-            clearInterval(loop);
+
+            cancelAnimationFrame(animationFrameId);
+
+            clearInterval(sendIntervalId);
+
             container.innerHTML = "";
         }
     };
