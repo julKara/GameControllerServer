@@ -6,7 +6,7 @@ export function createUI(container, socket) {
     const backgroundValue = 0.9;
 
     // Distance moved per tap
-    const TAP_DISTANCE = 0.75;  // [0,1] range representing percentage of max speed
+    const TAP_DISTANCE = 0.90;  // [0,1] range representing percentage of max speed
 
     // Classes -------------------------------------------------------------------------
     class Vector2{
@@ -166,6 +166,9 @@ export function createUI(container, socket) {
                     font-size: 42px;
                     font-weight: bold;
                     z-index: 10;
+
+                    pointer-events: none;
+                    user-select: none;
                 "
             >
                 Score: 0
@@ -177,7 +180,7 @@ export function createUI(container, socket) {
     // SAFARI ZOOM FIX
     // -------------------------------------------------------------------------
 
-    document.getElementById("dPad-wrapper").style.background =  hsvToRgb(backgroundHue, backgroundSaturation, backgroundValue);
+    document.getElementById("dPad-wrapper").style.backgroundColor =  hsvToRgb(backgroundHue, backgroundSaturation, backgroundValue);
     
     let lastTouchEnd = 0;
 
@@ -340,7 +343,7 @@ export function createUI(container, socket) {
 
     function loop() {
 
-        background();
+        //background();
 
         animationFrameId = requestAnimationFrame(loop);
     }
@@ -357,9 +360,15 @@ export function createUI(container, socket) {
 
                 backgroundHue = parseInt(data.hue);
 
-                // Clamp to valid HSV hue range
                 if (backgroundHue < 0) backgroundHue = 0;
                 if (backgroundHue > 360) backgroundHue = 360;
+
+                const wrapper = document.getElementById("dPad-wrapper");
+
+                if (wrapper) {
+                    wrapper.style.backgroundColor =
+                        hsvToRgb(backgroundHue, backgroundSaturation, backgroundValue);
+                }
 
                 console.log("Updated background hue:", backgroundHue);
             }
