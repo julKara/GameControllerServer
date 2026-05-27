@@ -6,7 +6,7 @@ export function createUI(container, socket) {
     const backgroundValue = 0.9;
 
     // Distance moved per tap
-    const TAP_DISTANCE = 0.35;  // [0,1] range representing percentage of max speed
+    const TAP_DISTANCE = 0.75;  // [0,1] range representing percentage of max speed
 
     // Classes -------------------------------------------------------------------------
     class Vector2{
