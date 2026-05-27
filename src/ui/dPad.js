@@ -8,6 +8,8 @@ export function createUI(container, socket) {
     // Distance moved per tap
     const TAP_DISTANCE = 0.90;  // [0,1] range representing percentage of max speed
 
+    let currentScore = 0;
+
     // Classes -------------------------------------------------------------------------
     class Vector2{
         constructor(x, y){
