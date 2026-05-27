@@ -340,16 +340,6 @@ export function createUI(container, socket) {
             y: y
         }));
     }
-
-    // function loop() {
-
-    //     //background();
-
-    //     animationFrameId = requestAnimationFrame(loop);
-    // }
-
-    // // Start render loop
-    // loop();
     
     return {
 
