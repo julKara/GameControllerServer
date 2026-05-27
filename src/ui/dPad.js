@@ -341,15 +341,15 @@ export function createUI(container, socket) {
         }));
     }
 
-    function loop() {
+    // function loop() {
 
-        //background();
+    //     //background();
 
-        animationFrameId = requestAnimationFrame(loop);
-    }
+    //     animationFrameId = requestAnimationFrame(loop);
+    // }
 
-    // Start render loop
-    loop();
+    // // Start render loop
+    // loop();
     
     return {
 
@@ -384,10 +384,6 @@ export function createUI(container, socket) {
         },
 
         destroy() {
-
-            cancelAnimationFrame(animationFrameId);
-
-            clearInterval(sendIntervalId);
 
             container.innerHTML = "";
         }
