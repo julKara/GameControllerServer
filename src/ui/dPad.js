@@ -131,13 +131,13 @@ export function createUI(container, socket) {
                     top:50%;
                     transform:translate(-50%,-50%);
                     width: 100vw;
-                    height: 100vh;  
+                    height: 80vh;  
 
                     display:grid;
                     grid-template-columns: repeat(3, 1fr);
                     grid-template-rows: repeat(3, 1fr);
                     gap:0vw;
-                    padding: 4vw;
+                    padding: 6vw;
                     box-sizing: border-box;
 
                     z-index:10;
