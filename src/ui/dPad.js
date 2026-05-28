@@ -131,7 +131,7 @@ export function createUI(container, socket) {
                     top:50%;
                     transform:translate(-50%,-50%);
                     width: 100vw;
-                    height: 80vh;  
+                    height: 60vh;  
 
                     display:grid;
                     grid-template-columns: repeat(3, 1fr);
